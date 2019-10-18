@@ -1,10 +1,10 @@
 import twitter
 
 api = twitter.Api(
-    consumer_key='kKPenxy5WFahqtNNtG66XfthI',
-    consumer_secret='rEt8ux88iRxfcPR2Q9uFqjCKxFQZMkTV1lrxRqRKpEVWQRTu3o',
-    access_token_key='803348197586374656-C1dKgm5XBApL9vgNxSis0cAuxuJRDJs',
-    access_token_secret='BQhQIf7mELBWVZMA2ggAw8F2yhWqRm74MRyytTLlgbN5I'
+    consumer_key='hide',
+    consumer_secret='hide',
+    access_token_key='hide',
+    access_token_secret='hide'
 )
 
 print(api.VerifyCredentials())
