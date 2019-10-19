@@ -14,5 +14,5 @@ class TwitterService:
         )
 
     def get_followers(self, user: str) -> List[str]:
-        followers = self.api.GetFollowers(screen_name=user)
+        followers = self.api.GetFollowers(screen_name=f'@{user}')
         return [follower.name for follower in followers]
