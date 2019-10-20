@@ -1,6 +1,8 @@
 from datetime import datetime
+from typing import Callable, List, Tuple
 
 from api.connected.entities import DevsConnection
+from connected.exceptions import ExternalServiceException
 
 
 class CreateConnectionDataUseCase:
@@ -10,16 +12,33 @@ class CreateConnectionDataUseCase:
         self.github_service = github_service
 
     def execute(self, dev1: str, dev2: str):
-        dev1_followers = self.twitter_service.get_followers(dev1)
-        dev2_followers = self.twitter_service.get_followers(dev2)
+        exceptions = []
+        get_followers = lambda service, dev: service.get_followers(dev)
+        get_organizations = lambda service, dev: service.get_organizations_for_user(dev)
 
-        print(f'found followers for {dev1}: {dev1_followers}')
-        print(f'found followers for {dev2}: {dev2_followers}')
+        dev1_followers, exceptions = self.try_get_data(dev1, self.twitter_service, exceptions, get_followers)
+        dev2_followers, exceptions = self.try_get_data(dev2, self.twitter_service, exceptions, get_followers)
+        dev1_orgs, exceptions = self.try_get_data(dev1, self.github_service, exceptions, get_organizations)
+        dev2_orgs, exceptions = self.try_get_data(dev2, self.github_service, exceptions, get_organizations)
 
-        dev1_orgs = set(self.github_service.get_organizations_for_user(dev1))
-        dev2_orgs = set(self.github_service.get_organizations_for_user(dev2))
-        common_orgs = list(dev1_orgs & dev2_orgs)
+        if not exceptions:
+            common_orgs = list(set(dev1_orgs) & set(dev2_orgs))
 
-        are_connected = (dev1 in dev2_followers and dev2 in dev1_followers) or (len(common_orgs) > 0)
+            are_connected = (dev1 in dev2_followers and dev2 in dev1_followers) or (len(common_orgs) > 0)
 
-        return DevsConnection(connected=are_connected, timestamp=datetime.now, organizations=common_orgs)
+            return DevsConnection(connected=are_connected, timestamp=datetime.now, organizations=common_orgs), []
+        else:
+            return None, exceptions
+
+    @staticmethod
+    def try_get_data(
+            dev: str, service, exception_list: List[ExternalServiceException],
+            func_to_call: Callable[[object, str], List[str]]
+    ) -> Tuple[List[str], List[ExternalServiceException]]:
+        result = []
+        try:
+            result = func_to_call(service, dev)
+        except ExternalServiceException as error:
+            exception_list.append(error)
+
+        return result, exception_list

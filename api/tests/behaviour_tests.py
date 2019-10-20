@@ -1,15 +1,18 @@
 import json
 from unittest.mock import patch, MagicMock
 
+from github3.exceptions import GitHubException
+from twitter import TwitterError
+
 from api import api
 
 
 class TestGetConnection:
 
     @patch('connected.services.login')
-    @patch('connected.services.twitter')
-    def test_get_two_unconnected_users(self, twitter, git_hub_login):
-        scenario = self.Scenario(twitter, git_hub_login)
+    @patch('connected.services.Api')
+    def test_get_two_unconnected_users(self, twitter_api, git_hub_login):
+        scenario = self.Scenario(twitter_api, git_hub_login)
 
         scenario.given_two_existing_developers()
         scenario.given_they_don_t_follow_each_other_on_twitter()
@@ -26,9 +29,9 @@ class TestGetConnection:
         scenario.then_the_response_will_say_if_the_users_are_connected(False)
 
     @patch('connected.services.login')
-    @patch('connected.services.twitter')
-    def test_get_connection_for_two_twitter_only_connected_users(self, twitter, git_hub_login):
-        scenario = self.Scenario(twitter, git_hub_login)
+    @patch('connected.services.Api')
+    def test_get_connection_for_two_twitter_only_connected_users(self, twitter_api, git_hub_login):
+        scenario = self.Scenario(twitter_api, git_hub_login)
 
         scenario.given_two_existing_developers()
         scenario.given_they_follow_each_other_on_twitter()
@@ -46,9 +49,9 @@ class TestGetConnection:
         scenario.then_the_response_will_contain_an_empty_organizations_list()
 
     @patch('connected.services.login')
-    @patch('connected.services.twitter')
-    def test_get_two_unconnected_twitter_users_sharing_orgs_on_github(self, twitter, git_hub_login):
-        scenario = self.Scenario(twitter, git_hub_login)
+    @patch('connected.services.Api')
+    def test_get_two_unconnected_twitter_users_sharing_orgs_on_github(self, twitter_api, git_hub_login):
+        scenario = self.Scenario(twitter_api, git_hub_login)
 
         scenario.given_two_existing_developers()
         scenario.given_they_don_t_follow_each_other_on_twitter()
@@ -65,6 +68,25 @@ class TestGetConnection:
         scenario.then_the_response_will_say_if_the_users_are_connected(True)
         scenario.then_the_response_will_contain_the_shared_organization_names()
 
+    @patch('connected.services.login')
+    @patch('connected.services.Api')
+    def test_get_connection_with_twitter_and_github_not_working(self, twitter_api, git_hub_login):
+        scenario = self.Scenario(twitter_api, git_hub_login)
+
+        scenario.given_two_existing_developers()
+        scenario.given_twitter_is_down()
+        scenario.given_github_is_down()
+
+        scenario.given_a_request_to_see_if_the_two_developers_are_connected()
+
+        scenario.when_sending_the_request()
+
+        scenario.then_the_response_status_code_is(200)
+
+        scenario.when_parsing_the_response_data()
+
+        scenario.then_the_response_will_contain_one_error_for_each_service_and_user()
+
     class Scenario:
         TEST_DEV_NAME1 = 'test name 1'
         TEST_DEV_NAME2 = 'test name 2'
@@ -79,8 +101,14 @@ class TestGetConnection:
         TEST_UNIQUE_ORG_NAME1 = 'github org1 unique to one user'
         TEST_UNIQUE_ORG_NAME2 = 'github org2 unique to the other user'
 
-        def __init__(self, twitter=MagicMock(), git_hub_login=MagicMock()):
-            self.twitter = twitter
+        TEST_TWITTER_ERROR = 'twitter error'
+        TEST_GITHUB_ERROR = 'error from github'
+
+        def __init__(self, twitter_api_class=MagicMock(), git_hub_login=MagicMock()):
+            self.twitter_api = MagicMock()
+            self.twitter_api_class = twitter_api_class
+            self.twitter_api_class.return_value = self.twitter_api
+
             self.git_hub_login = git_hub_login
             self.git_hub = MagicMock()
             self.git_hub_login.return_value = self.git_hub
@@ -106,13 +134,19 @@ class TestGetConnection:
             followers_list[1].name = 'another user 1'
             followers_list[2].name = self.dev2
             followers_list[3].name = 'another user 2'
-            self.twitter.Api.return_value.GetFollowers.return_value = followers_list
+            self.twitter_api.GetFollowers.return_value = followers_list
 
         def given_they_don_t_follow_each_other_on_twitter(self):
-            self.twitter.Api.return_value.GetFollowers.return_value = []
+            self.twitter_api.GetFollowers.return_value = []
 
         def given_a_request_to_see_if_the_two_developers_are_connected(self):
             self.request = f'/connected/realtime/{self.dev1}/{self.dev2}'
+
+        def given_twitter_is_down(self):
+            self.twitter_api.GetFollowers.side_effect = TwitterError(self.TEST_TWITTER_ERROR)
+
+        def given_github_is_down(self):
+            self.git_hub.organizations_with.side_effect = GitHubException(self.TEST_GITHUB_ERROR)
 
         def given_they_don_t_share_any_organizations_on_github(self):
             self.git_hub.organizations_with.return_value = []
@@ -156,3 +190,9 @@ class TestGetConnection:
             assert len(response_organizations) == 2
             assert self.TEST_SHARED_ORG_NAME1 in response_organizations
             assert self.TEST_SHARED_ORG_NAME2 in response_organizations
+
+        def then_the_response_will_contain_one_error_for_each_service_and_user(self):
+            response_errors = self.result_data['errors']
+            assert response_errors == [
+                self.TEST_TWITTER_ERROR, self.TEST_TWITTER_ERROR, self.TEST_GITHUB_ERROR, self.TEST_GITHUB_ERROR
+            ]

@@ -13,4 +13,13 @@ class DevConnectedResponseSchema(Schema):
         return data
 
     def get_organizations(self, obj):
-        return [org['name'] for org in obj['organizations']]
+        if obj.get('organizations', None):
+            return [org['name'] for org in obj['organizations']]
+        return []
+
+
+class ErrorResponseSchema(Schema):
+    errors = fields.Method('get_error_messages')
+
+    def get_error_messages(self, obj):
+        return [str(error) for error in obj]

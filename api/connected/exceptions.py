@@ -1,0 +1,2 @@
+class ExternalServiceException(Exception):
+    pass
