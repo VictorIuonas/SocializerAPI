@@ -1,7 +1,9 @@
 # access token 6bc50263fea3c977f105e03617a6c5bb21d5434f
 from github3 import login
 
-gh = login(token='6bc50263fea3c977f105e03617a6c5bb21d5434f')
+import secrets
+
+gh = login(token=secrets.GITHUB_TOKEN)
 print(str(gh.me()))
 
 user1 = gh.user('andreiio')

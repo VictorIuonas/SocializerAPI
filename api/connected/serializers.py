@@ -3,7 +3,7 @@ from marshmallow import Schema, fields, pre_dump
 
 class DevConnectedResponseSchema(Schema):
     connected = fields.Boolean()
-    organizations = fields.List(fields.String)
+    organizations = fields.Method('get_organizations')
 
     @pre_dump(pass_many=False)
     def remove_unconnected_organizations(self, data, many):
@@ -11,3 +11,6 @@ class DevConnectedResponseSchema(Schema):
             data.pop('organizations', None)
 
         return data
+
+    def get_organizations(self, obj):
+        return [org['name'] for org in obj['organizations']]

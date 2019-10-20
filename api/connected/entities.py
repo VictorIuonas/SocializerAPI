@@ -4,6 +4,16 @@ from typing import List
 
 
 @dataclass
+class Organization:
+    external_id: int
+    name: str
+    id: int
+
+    def __hash__(self):
+        return self.external_id
+
+
+@dataclass
 class DevsConnection:
     timestamp: datetime
     connected: bool
