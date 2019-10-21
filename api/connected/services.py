@@ -40,4 +40,4 @@ class GitHubService:
 
     @staticmethod
     def to_domain(org: ShortOrganization) -> OrganizationEntity:
-        return OrganizationEntity(name=org.login, id=0)
+        return OrganizationEntity(name=org.login, id=0, external_id=org.id)

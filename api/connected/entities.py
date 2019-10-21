@@ -7,6 +7,7 @@ from typing import List
 class OrganizationEntity:
     name: str
     id: int
+    external_id: int
 
     def __hash__(self):
         return self.id

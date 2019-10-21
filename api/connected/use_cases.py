@@ -1,15 +1,14 @@
-from datetime import datetime
 from typing import Callable, List, Tuple
 
-from api.connected.entities import DevsConnection
 from connected.exceptions import ExternalServiceException
 
 
 class CreateConnectionDataUseCase:
 
-    def __init__(self, twitter_service, github_service):
+    def __init__(self, twitter_service, github_service, connection_repo):
         self.twitter_service = twitter_service
         self.github_service = github_service
+        self.connection_repo = connection_repo
 
     def execute(self, dev1: str, dev2: str):
         exceptions = []
@@ -26,7 +25,11 @@ class CreateConnectionDataUseCase:
 
             are_connected = (dev1 in dev2_followers and dev2 in dev1_followers) or (len(common_orgs) > 0)
 
-            return DevsConnection(connected=are_connected, timestamp=datetime.now, organizations=common_orgs), []
+            result = self.connection_repo.add_connection_between_developers(
+                dev1, dev2, are_connected, common_organizations=common_orgs
+            )
+
+            return result, []
         else:
             return None, exceptions
 

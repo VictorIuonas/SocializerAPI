@@ -13,7 +13,10 @@ def build_github_service() -> GitHubService:
 
 
 def build_create_connection_data_use_case() -> CreateConnectionDataUseCase:
-    return CreateConnectionDataUseCase(twitter_service=build_twitter_service(), github_service=build_github_service())
+    return CreateConnectionDataUseCase(
+        twitter_service=build_twitter_service(), github_service=build_github_service(),
+        connection_repo=ConnectionsRepository()
+    )
 
 
 def build_get_connection_history_use_case() -> GetConnectionHistoryUseCase:
