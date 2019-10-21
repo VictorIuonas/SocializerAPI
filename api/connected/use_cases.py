@@ -42,3 +42,12 @@ class CreateConnectionDataUseCase:
             exception_list.append(error)
 
         return result, exception_list
+
+
+class GetConnectionHistoryUseCase:
+
+    def __init__(self, connection_repo):
+        self.connection_repo = connection_repo
+
+    def execute(self, dev1: str, dev2: str):
+        return self.connection_repo.get_connection_for_developers(dev1, dev2), []

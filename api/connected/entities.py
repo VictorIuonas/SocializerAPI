@@ -4,20 +4,19 @@ from typing import List
 
 
 @dataclass
-class Organization:
-    external_id: int
+class OrganizationEntity:
     name: str
     id: int
 
     def __hash__(self):
-        return self.external_id
+        return self.id
 
 
 @dataclass
 class DevsConnection:
     timestamp: datetime
     connected: bool
-    organizations: List[str]
+    organizations: List[OrganizationEntity]
 
     def to_dict(self):
         return asdict(self)

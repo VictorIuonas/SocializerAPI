@@ -1,42 +1,36 @@
 from datetime import datetime
 
-from sqlalchemy.orm import relationship, backref
+from sqlalchemy.orm import relationship
 
 from api import db
 
 
 class Organization(db.Model):
-    __tablename__ = 'organizations'
-
+    __tablename__ = "organizations"
+    __table_args__ = {'extend_existing': True}
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100))
     external_id = db.Column(db.Integer)
 
-    connections = relationship('Connection', secondary='link_connections_organizations')
-
 
 class Connection(db.Model):
-    __tablename__ = 'connections'
-
+    __tablename__ = "connections"
+    __table_args__ = {'extend_existing': True}
     id = db.Column(db.Integer, primary_key=True)
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     dev1 = db.Column(db.String(100))
     dev2 = db.Column(db.String(100))
 
-    is_twitter_link = db.Column(db.Boolean)
-    organizations = relationship('Organization', secondary='link_connections_organizations')
-
-
-class ConnectionToOrganization(db.Model):
-    __tablename__ = 'link_connections_organizations'
-
-    id = db.Column(db.Integer, primary_key=True)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-    connection_id = db.Column(db.Integer, db.ForeignKey('connections.id'))
-    organization_id = db.Column(db.Integer, db.ForeignKey('organizations.id'))
-
-    connection = relationship(
-        Connection, backref=backref('link_connections_organizations', cascade='all, delete-orphan')
+    are_linked = db.Column(db.Boolean)
+    common_organizations = relationship(
+        Organization, secondary='connection_x_organization_table', lazy='subquery',
+        backref=db.backref('connections', lazy=True)
     )
-    organization = relationship(
-        Organization, backref=backref('link_connections_organizations', cascade='all, delete-orphan')
-    )
+
+
+ConnectionsToOrganizations = db.Table(
+    'connection_x_organization_table',
+    db.Column('connections_id', db.Integer, db.ForeignKey('connections.id'), primary_key=True),
+    db.Column('organizations_id', db.Integer, db.ForeignKey('organizations.id'), primary_key=True),
+    extend_existing=True
+)

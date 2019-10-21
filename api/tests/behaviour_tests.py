@@ -1,12 +1,14 @@
 import json
 from unittest.mock import patch, MagicMock
 
+import pytest
 from github3.exceptions import GitHubException
 from twitter import TwitterError
 
 from api import api
 
 
+@pytest.mark.unit
 class TestGetConnection:
 
     @patch('connected.services.login')
@@ -18,9 +20,7 @@ class TestGetConnection:
         scenario.given_they_don_t_follow_each_other_on_twitter()
         scenario.given_they_don_t_share_any_organizations_on_github()
 
-        scenario.given_a_request_to_see_if_the_two_developers_are_connected()
-
-        scenario.when_sending_the_request()
+        scenario.when_checking_if_the_developers_are_connected()
 
         scenario.then_the_response_status_code_is(200)
 
@@ -37,9 +37,7 @@ class TestGetConnection:
         scenario.given_they_follow_each_other_on_twitter()
         scenario.given_they_don_t_share_any_organizations_on_github()
 
-        scenario.given_a_request_to_see_if_the_two_developers_are_connected()
-
-        scenario.when_sending_the_request()
+        scenario.when_checking_if_the_developers_are_connected()
 
         scenario.then_the_response_status_code_is(200)
 
@@ -57,9 +55,7 @@ class TestGetConnection:
         scenario.given_they_don_t_follow_each_other_on_twitter()
         scenario.given_they_share_two_organizations_on_github()
 
-        scenario.given_a_request_to_see_if_the_two_developers_are_connected()
-
-        scenario.when_sending_the_request()
+        scenario.when_checking_if_the_developers_are_connected()
 
         scenario.then_the_response_status_code_is(200)
 
@@ -77,9 +73,7 @@ class TestGetConnection:
         scenario.given_twitter_is_down()
         scenario.given_github_is_down()
 
-        scenario.given_a_request_to_see_if_the_two_developers_are_connected()
-
-        scenario.when_sending_the_request()
+        scenario.when_checking_if_the_developers_are_connected()
 
         scenario.then_the_response_status_code_is(200)
 
@@ -139,9 +133,6 @@ class TestGetConnection:
         def given_they_don_t_follow_each_other_on_twitter(self):
             self.twitter_api.GetFollowers.return_value = []
 
-        def given_a_request_to_see_if_the_two_developers_are_connected(self):
-            self.request = f'/connected/realtime/{self.dev1}/{self.dev2}'
-
         def given_twitter_is_down(self):
             self.twitter_api.GetFollowers.side_effect = TwitterError(self.TEST_TWITTER_ERROR)
 
@@ -170,8 +161,8 @@ class TestGetConnection:
 
             self.git_hub.organizations_with.side_effect = [first_orgs, second_orgs]
 
-        def when_sending_the_request(self):
-            self.response = self.client.get(self.request)
+        def when_checking_if_the_developers_are_connected(self):
+            self.response = self.client.get(f'/connected/realtime/{self.dev1}/{self.dev2}')
 
         def when_parsing_the_response_data(self):
             self.result_data = json.loads(self.response.data)
@@ -196,3 +187,87 @@ class TestGetConnection:
             assert response_errors == [
                 self.TEST_TWITTER_ERROR, self.TEST_TWITTER_ERROR, self.TEST_GITHUB_ERROR, self.TEST_GITHUB_ERROR
             ]
+
+
+@pytest.mark.unit
+class TestGetRegisteredConnection:
+
+    @patch('connected.repositories.Connection')
+    @pytest.mark.skip
+    def test_getting_the_connection_history_for_users_with_no_history(self, connection_db_model):
+        with self.Scenario(connection_db_model) as scenario:
+            scenario.when_getting_the_history_of_the_connection_between_the_developers()
+
+            scenario.then_the_response_status_code_is(200)
+
+            scenario.when_parsing_the_response_data()
+
+            scenario.then_the_response_will_contain_an_empty_list()
+
+    @patch('connected.repositories.Connection')
+    @pytest.mark.skip
+    def test_getting_the_history_for_two_developers_found_to_not_be_connected(self, connection_db_model):
+        with self.Scenario(connection_db_model) as scenario:
+            scenario.given_the_users_were_not_connected()
+
+            scenario.when_getting_the_history_of_the_connection_between_the_developers()
+
+            scenario.then_the_response_status_code_is(200)
+
+            scenario.when_parsing_the_response_data()
+
+            scenario.then_the_response_will_contain_the_date_and_not_connected()
+
+    class Scenario:
+        TEST_DEV_NAME1 = 'test name 1'
+        TEST_DEV_NAME2 = 'test name 2'
+
+        TEST_SHARED_ORG_EXT_ID1 = 13
+        TEST_SHARED_ORG_EXT_ID2 = 17
+        TEST_SHARED_ORG_NAME1 = 'shared github org1'
+        TEST_SHARED_ORG_NAME2 = 'shared github org2'
+
+        def __init__(self, connection_db_model=MagicMock()):
+            self.connection = MagicMock()
+            self.connection_db_model = connection_db_model
+
+            self.dev1 = None
+            self.dev2 = None
+
+            self.request = None
+
+            self.client = api.test_client()
+
+            self.result = None
+            self.response = None
+            self.result_data = None
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            pass
+
+        def given_the_users_were_not_connected(self):
+            self.connection_db_model.query.filter.return_value = self.connection
+            self.connection.dev1 = self.TEST_DEV_NAME1
+            self.connection.dev2 = self.TEST_DEV_NAME2
+            self.connection.is_twitter_link = False
+            self.connection.organizations = []
+            self.connection.timestamp = '12:00'
+
+        def when_getting_the_history_of_the_connection_between_the_developers(self):
+            self.response = self.client.get(f'/connected/registered/{self.dev1}/{self.dev2}')
+
+        def when_parsing_the_response_data(self):
+            self.result_data = json.loads(self.response.data)
+
+        def then_the_response_status_code_is(self, status_code: int):
+            assert self.response.status_code == status_code
+
+        def then_the_response_will_contain_an_empty_list(self):
+            assert self.result_data == []
+
+        def then_the_response_will_contain_the_date_and_not_connected(self):
+            assert self.result_data[0]['connected'] == False
+            assert self.result_data[0].get('registered_at', None) is not None

@@ -1,20 +1,21 @@
-from marshmallow import Schema, fields, pre_dump
+from marshmallow import Schema, fields, pre_dump, post_dump
 
 
 class DevConnectedResponseSchema(Schema):
     connected = fields.Boolean()
     organizations = fields.Method('get_organizations')
+    registered_at = fields.DateTime(attribute='timestamp')
 
-    @pre_dump(pass_many=False)
-    def remove_unconnected_organizations(self, data, many):
+    @post_dump(pass_many=False)
+    def remove_organizations_from_unconnected(self, data, many):
         if not data['connected']:
             data.pop('organizations', None)
 
         return data
 
     def get_organizations(self, obj):
-        if obj.get('organizations', None):
-            return [org['name'] for org in obj['organizations']]
+        if obj.organizations:
+            return [org.name for org in obj.organizations]
         return []
 
 

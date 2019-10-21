@@ -4,7 +4,7 @@ from github3.exceptions import GitHubException
 from github3.orgs import ShortOrganization
 from twitter import TwitterError, Api
 
-from connected.entities import Organization
+from connected.entities import OrganizationEntity
 from connected.exceptions import ExternalServiceException
 
 
@@ -31,7 +31,7 @@ class GitHubService:
     def __init__(self, config):
         self.gh = login(token=config['GITHUB_TOKEN'])
 
-    def get_organizations_for_user(self, user: str) -> List[Organization]:
+    def get_organizations_for_user(self, user: str) -> List[OrganizationEntity]:
         try:
             orgs = self.gh.organizations_with(user)
             return [self.to_domain(org) for org in orgs]
@@ -39,5 +39,5 @@ class GitHubService:
             raise ExternalServiceException(str(error))
 
     @staticmethod
-    def to_domain(org: ShortOrganization) -> Organization:
-        return Organization(external_id=org.id, name=org.login, id=0)
+    def to_domain(org: ShortOrganization) -> OrganizationEntity:
+        return OrganizationEntity(name=org.login, id=0)
