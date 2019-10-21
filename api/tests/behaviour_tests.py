@@ -1,4 +1,3 @@
-import json
 from unittest.mock import patch, MagicMock, call
 
 import pytest
@@ -6,6 +5,7 @@ from github3.exceptions import GitHubException
 from twitter import TwitterError
 
 from api import api
+from tests.utils import HttpScenario, ExternalServicesScenario
 
 
 @pytest.mark.unit
@@ -87,6 +87,21 @@ class TestGetConnection:
         scenario.then_the_response_will_say_if_the_users_are_connected(True)
         scenario.then_the_response_will_contain_the_shared_organization_names()
 
+    @patch('connected.repositories.Organization')
+    @patch('connected.repositories.Connection')
+    @patch('connected.repositories.db')
+    @patch('connected.services.login')
+    @patch('connected.services.Api')
+    def test_get_connection_for_two_connected_users_twice_will_store_in_the_database_only_one_connection(
+            self, twitter_api, git_hub_login, db, connection_db_class, organization_db_class
+    ):
+        scenario = self.Scenario(twitter_api, git_hub_login, db, connection_db_class, organization_db_class)
+
+        scenario.given_two_existing_developers()
+        scenario.given_they_don_t_follow_each_other_on_twitter()
+        scenario.given_they_share_two_organizations_on_github()
+        scenario.given_the_db_object_stores_the_developers_as_connected_with_their_shared_organizations()
+
     @patch('connected.repositories.db')
     @patch('connected.services.login')
     @patch('connected.services.Api')
@@ -107,7 +122,7 @@ class TestGetConnection:
 
         scenario.then_the_response_will_contain_one_error_for_each_service_and_user()
 
-    class Scenario:
+    class Scenario(HttpScenario, ExternalServicesScenario):
         TEST_DEV_NAME1 = 'test name 1'
         TEST_DEV_NAME2 = 'test name 2'
 
@@ -130,13 +145,8 @@ class TestGetConnection:
                 self, twitter_api_class=MagicMock(), git_hub_login=MagicMock(), db=MagicMock(),
                 connection_db_class=MagicMock(), organization_db_class=MagicMock()
         ):
-            self.twitter_api = MagicMock()
-            self.twitter_api_class = twitter_api_class
-            self.twitter_api_class.return_value = self.twitter_api
-
-            self.git_hub_login = git_hub_login
-            self.git_hub = MagicMock()
-            self.git_hub_login.return_value = self.git_hub
+            HttpScenario.__init__(self)
+            ExternalServicesScenario.__init__(self, twitter_api_class, git_hub_login)
 
             self.db = db
             self.connection_db_class = connection_db_class
@@ -209,6 +219,8 @@ class TestGetConnection:
             self.connection_obj.organizations = []
 
         def given_the_db_object_stores_the_developers_as_connected_with_no_common_organizations(self):
+            self.connection_db_class.query.filter_by.return_value = MagicMock()
+            self.connection_db_class.query.filter_by.return_value.count.return_value = 0
             self.connection_obj.are_linked = True
             self.connection_obj.common_organizations = []
 
@@ -227,12 +239,6 @@ class TestGetConnection:
 
         def when_checking_if_the_developers_are_connected(self):
             self.response = self.client.get(f'/connected/realtime/{self.dev1}/{self.dev2}')
-
-        def when_parsing_the_response_data(self):
-            self.result_data = json.loads(self.response.data)
-
-        def then_the_response_status_code_is(self, status_code: int):
-            assert self.response.status_code == status_code
 
         def then_the_response_will_say_if_the_users_are_connected(self, are_connected: bool):
             assert self.result_data['connected'] == are_connected

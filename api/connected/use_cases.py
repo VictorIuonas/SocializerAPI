@@ -25,7 +25,7 @@ class CreateConnectionDataUseCase:
 
             are_connected = (dev1 in dev2_followers and dev2 in dev1_followers) or (len(common_orgs) > 0)
 
-            result = self.connection_repo.add_connection_between_developers(
+            result = self.connection_repo.get_or_create_connection_between_developers(
                 dev1, dev2, are_connected, common_organizations=common_orgs
             )
 

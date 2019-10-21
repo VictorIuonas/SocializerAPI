@@ -21,7 +21,7 @@ def realtime(dev1, dev2):
     return response
 
 
-@api.route('/connected/registered/<dev1>/<dev2>', methods=['GET'])
+@api.route('/connected/register/<dev1>/<dev2>', methods=['GET'])
 def registered(dev1, dev2):
     from connected.factories import build_get_connection_history_use_case
     use_case = build_get_connection_history_use_case()
