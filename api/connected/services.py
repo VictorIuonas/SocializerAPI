@@ -20,11 +20,11 @@ class TwitterService:
 
     def get_followers(self, user: str) -> List[str]:
         try:
-            # followers = self.api.GetFollowers(screen_name=f'@{user}')
-            # return [follower.name for follower in followers]
-            return []
+            followers = self.api.GetFollowers(screen_name=f'@{user}')
+            return [follower.screen_name for follower in followers]
         except TwitterError as error:
-            raise ExternalServiceException(error.message)
+            print(f'from twitter, when getting followers for {user}: {str(error)}')
+            raise ExternalServiceException(f'twitter: {error.message}')
 
 
 class GitHubService:
@@ -37,7 +37,8 @@ class GitHubService:
             orgs = self.gh.organizations_with(user)
             return [self.to_domain(org) for org in orgs]
         except GitHubException as error:
-            raise ExternalServiceException(str(error))
+            print(f'from github, when getting orgs for {user}: {str(error)}')
+            raise ExternalServiceException(f'github: {str(error)}')
 
     @staticmethod
     def to_domain(org: ShortOrganization) -> OrganizationEntity:

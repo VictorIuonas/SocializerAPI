@@ -143,8 +143,8 @@ class TestGetRegisteredConnection:
 
 class TestGetConnection:
 
-    @patch('connected.services.login')
-    @patch('connected.services.Api')
+    @patch('api.connected.services.login')
+    @patch('api.connected.services.Api')
     def test_getting_the_connection_between_two_users_twice_in_a_row_will_only_store_it_once(
             self, twitter_api, git_hub_login
     ):

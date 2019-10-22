@@ -11,10 +11,10 @@ from tests.utils import HttpScenario, ExternalServicesScenario
 @pytest.mark.unit
 class TestGetConnection:
 
-    @patch('connected.repositories.Connection')
-    @patch('connected.repositories.db')
-    @patch('connected.services.login')
-    @patch('connected.services.Api')
+    @patch('api.connected.repositories.Connection')
+    @patch('api.connected.repositories.db')
+    @patch('api.connected.services.login')
+    @patch('api.connected.services.Api')
     def test_get_two_unconnected_users(self, twitter_api, git_hub_login, db, connection_db_class):
         scenario = self.Scenario(twitter_api, git_hub_login, db, connection_db_class)
 
@@ -32,10 +32,10 @@ class TestGetConnection:
         scenario.then_the_response_will_say_if_the_users_are_connected(False)
         scenario.then_the_result_will_be_saved_to_the_db_as_unconnected()
 
-    @patch('connected.repositories.Connection')
-    @patch('connected.repositories.db')
-    @patch('connected.services.login')
-    @patch('connected.services.Api')
+    @patch('api.connected.repositories.Connection')
+    @patch('api.connected.repositories.db')
+    @patch('api.connected.services.login')
+    @patch('api.connected.services.Api')
     def test_get_connection_for_two_twitter_only_connected_users(
             self, twitter_api, git_hub_login, db, connection_db_class
     ):
@@ -57,11 +57,11 @@ class TestGetConnection:
         scenario.then_the_response_will_say_if_the_users_are_connected(True)
         scenario.then_the_response_will_contain_an_empty_organizations_list()
 
-    @patch('connected.repositories.Organization')
-    @patch('connected.repositories.Connection')
-    @patch('connected.repositories.db')
-    @patch('connected.services.login')
-    @patch('connected.services.Api')
+    @patch('api.connected.repositories.Organization')
+    @patch('api.connected.repositories.Connection')
+    @patch('api.connected.repositories.db')
+    @patch('api.connected.services.login')
+    @patch('api.connected.services.Api')
     def test_get_two_unconnected_twitter_users_sharing_orgs_on_github(
             self, twitter_api, git_hub_login, db, connection_db_class, organization_db_class
     ):
@@ -87,11 +87,11 @@ class TestGetConnection:
         scenario.then_the_response_will_say_if_the_users_are_connected(True)
         scenario.then_the_response_will_contain_the_shared_organization_names()
 
-    @patch('connected.repositories.Organization')
-    @patch('connected.repositories.Connection')
-    @patch('connected.repositories.db')
-    @patch('connected.services.login')
-    @patch('connected.services.Api')
+    @patch('api.connected.repositories.Organization')
+    @patch('api.connected.repositories.Connection')
+    @patch('api.connected.repositories.db')
+    @patch('api.connected.services.login')
+    @patch('api.connected.services.Api')
     def test_get_connection_for_two_connected_users_twice_will_store_in_the_database_only_one_connection(
             self, twitter_api, git_hub_login, db, connection_db_class, organization_db_class
     ):
@@ -102,9 +102,9 @@ class TestGetConnection:
         scenario.given_they_share_two_organizations_on_github()
         scenario.given_the_db_object_stores_the_developers_as_connected_with_their_shared_organizations()
 
-    @patch('connected.repositories.db')
-    @patch('connected.services.login')
-    @patch('connected.services.Api')
+    @patch('api.connected.repositories.db')
+    @patch('api.connected.services.login')
+    @patch('api.connected.services.Api')
     def test_get_connection_with_twitter_and_github_not_working(self, twitter_api, git_hub_login, db):
         scenario = self.Scenario(twitter_api, git_hub_login, db=db)
 
@@ -176,10 +176,10 @@ class TestGetConnection:
 
         def given_they_follow_each_other_on_twitter(self):
             followers_list = [MagicMock(), MagicMock(), MagicMock(), MagicMock()]
-            followers_list[0].name = self.dev1
-            followers_list[1].name = 'another user 1'
-            followers_list[2].name = self.dev2
-            followers_list[3].name = 'another user 2'
+            followers_list[0].screen_name = self.dev1
+            followers_list[1].screen_name = 'another user 1'
+            followers_list[2].screen_name = self.dev2
+            followers_list[3].screen_name = 'another user 2'
             self.twitter_api.GetFollowers.return_value = followers_list
             self.connection_obj.are_linked = True
 
@@ -255,7 +255,10 @@ class TestGetConnection:
         def then_the_response_will_contain_one_error_for_each_service_and_user(self):
             response_errors = self.result_data['errors']
             assert response_errors == [
-                self.TEST_TWITTER_ERROR, self.TEST_TWITTER_ERROR, self.TEST_GITHUB_ERROR, self.TEST_GITHUB_ERROR
+                f'twitter: {self.TEST_TWITTER_ERROR}',
+                f'twitter: {self.TEST_TWITTER_ERROR}',
+                f'github: {self.TEST_GITHUB_ERROR}',
+                f'github: {self.TEST_GITHUB_ERROR}'
             ]
 
         def then_the_db_will_not_store_anything(self):
