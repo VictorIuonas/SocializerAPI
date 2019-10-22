@@ -6,7 +6,6 @@ This server will query both Twitter and GitHub to see if two developers are conn
 
 Clone this repository
 
-
 ### Running
 
 Create a secrets.py file following this struture:
@@ -33,4 +32,6 @@ GET http://127.0.0.1:5000/connected/register/{dev1}/{dev2}
 ```
 
 ### Future developments
-The docker image could be using an NGinx web server which could act as a proxy for the Flask web app.
+The docker image could be using an NGinx web server which could act as a proxy for the Flask web app.<br>
+Exception handling could be more refined, like actually checking the error codes returned by each provider.<br>
+The code for checking if a connection with the same data already exists should be query with a join<br>

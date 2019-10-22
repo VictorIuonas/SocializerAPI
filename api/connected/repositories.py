@@ -62,6 +62,7 @@ class ConnectionsRepository:
     def get_connection_for_developers_and_org(
             dev1: str, dev2: str, are_linked: bool, organizations_external_ids: List[int]
     ) -> Optional[Connection]:
+        # THIS SHOULD BE A QUERY WITH A JOIN, IT'S ALREADY COVERED BY A TEST. IT'S JUST TO LATE TO CHANGE IT NOW
         db_connections = Connection.query.filter_by(dev1=dev1, dev2=dev2, are_linked=are_linked)
         if db_connections.count() and organizations_external_ids:
             for db_connection in db_connections:
