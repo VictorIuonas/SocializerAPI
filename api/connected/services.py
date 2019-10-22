@@ -4,8 +4,8 @@ from github3.exceptions import GitHubException
 from github3.orgs import ShortOrganization
 from twitter import TwitterError, Api
 
-from connected.entities import OrganizationEntity
-from connected.exceptions import ExternalServiceException
+from api.connected.entities import OrganizationEntity
+from api.connected.exceptions import ExternalServiceException
 
 
 class TwitterService:
@@ -20,8 +20,9 @@ class TwitterService:
 
     def get_followers(self, user: str) -> List[str]:
         try:
-            followers = self.api.GetFollowers(screen_name=f'@{user}')
-            return [follower.name for follower in followers]
+            # followers = self.api.GetFollowers(screen_name=f'@{user}')
+            # return [follower.name for follower in followers]
+            return []
         except TwitterError as error:
             raise ExternalServiceException(error.message)
 

@@ -1,7 +1,7 @@
 from api import api
 from api.connected.use_cases import CreateConnectionDataUseCase, GetConnectionHistoryUseCase
-from connected.repositories import ConnectionsRepository
-from connected.services import TwitterService, GitHubService
+from api.connected.repositories import ConnectionsRepository
+from api.connected.services import TwitterService, GitHubService
 
 
 def build_twitter_service() -> TwitterService:

@@ -1,6 +1,6 @@
 FROM python:3.7
 
-WORKDIR /usr/src/app
+WORKDIR /app
 
 COPY requirements.txt ./
 
@@ -8,4 +8,4 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD #run_my_command
+CMD flask db upgrade ; flask run --host=0.0.0.0

@@ -1,8 +1,8 @@
 from typing import List, Optional
 
 from api import db
-from connected.db_models import Connection, Organization
-from connected.entities import DevsConnection, OrganizationEntity
+from api.connected.db_models import Connection, Organization
+from api.connected.entities import DevsConnection, OrganizationEntity
 
 
 class ConnectionsRepository:

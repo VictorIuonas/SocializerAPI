@@ -1,6 +1,6 @@
 from typing import Callable, List, Tuple
 
-from connected.exceptions import ExternalServiceException
+from api.connected.exceptions import ExternalServiceException
 
 
 class CreateConnectionDataUseCase:

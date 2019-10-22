@@ -6,7 +6,7 @@ from api.connected.serializers import DevConnectedResponseSchema, ErrorResponseS
 
 @api.route('/connected/realtime/<dev1>/<dev2>', methods=['GET'])
 def realtime(dev1, dev2):
-    from connected.factories import build_create_connection_data_use_case
+    from api.connected.factories import build_create_connection_data_use_case
     use_case = build_create_connection_data_use_case()
 
     result, errors = use_case.execute(dev1, dev2)
@@ -23,7 +23,7 @@ def realtime(dev1, dev2):
 
 @api.route('/connected/register/<dev1>/<dev2>', methods=['GET'])
 def registered(dev1, dev2):
-    from connected.factories import build_get_connection_history_use_case
+    from api.connected.factories import build_get_connection_history_use_case
     use_case = build_get_connection_history_use_case()
 
     result, errors = use_case.execute(dev1, dev2)
